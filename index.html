@@ -386,12 +386,12 @@
     }
 
     .fly-cover::before {
-      top: 14%;
+      top: 7%;
       transform: rotate(-1.2deg);
     }
 
     .fly-cover::after {
-      bottom: 14%;
+      bottom: 7%;
       left: 14%;
       right: 10%;
       transform: rotate(1deg);
@@ -1015,17 +1015,28 @@
       return color;
     }
 
-    function preloadCover(src) {
+    function preloadCover(src, timeoutMs = 900) {
       if (!src) return Promise.resolve();
       if (coverCache.has(src)) return coverCache.get(src);
       const p = new Promise((resolve) => {
         const img = new Image();
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          resolve();
+        };
+        const timer = setTimeout(finish, timeoutMs);
         img.decoding = 'async';
         img.onload = () => {
-          if (img.decode) img.decode().then(resolve).catch(resolve);
-          else resolve();
+          clearTimeout(timer);
+          if (img.decode) img.decode().then(finish).catch(finish);
+          else finish();
         };
-        img.onerror = resolve;
+        img.onerror = () => {
+          clearTimeout(timer);
+          finish();
+        };
         img.src = src;
       });
       coverCache.set(src, p);
@@ -1085,15 +1096,17 @@
       spinePick.classList.add('is-picked');
 
       // 书盖住画面后再藏上一轮结果，避免再抽时闪白
-      await wait(320);
+      await wait(300);
       dock.classList.remove('is-visible');
       views.result.classList.remove('active');
       appEl.classList.add('is-drawing');
 
-      await Promise.all([wait(520), coverReady]);
+      // 只等抽出动画收完；封面最多再等一小会儿，避免慢网卡在闭合书皮上
+      await wait(480);
+      await Promise.race([coverReady, wait(180)]);
 
       flyBook.classList.add('is-open');
-      await wait(680);
+      await wait(560);
 
       // 翻开后立刻铺结果并淡出书，不再上升留白
       fillResultContent();
