@@ -8,7 +8,9 @@
   <title>図書委員今天听什么</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,550;9..144,600&family=Noto+Serif+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,550;9..144,600&family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,550;9..144,600&family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+  <link rel="preload" as="image" href="background.jpg">
   <script src="albums-data.js"></script>
   <script src="lucky-colors.js"></script>
   <style>
@@ -291,10 +293,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding-bottom: 12vh;
+      padding-bottom: 10vh;
       opacity: 0;
       visibility: hidden;
-      transition: opacity .35s ease, visibility .35s ease;
+      transition: opacity .32s ease, visibility .32s ease;
     }
 
     .fly-layer.is-on {
@@ -304,44 +306,46 @@
 
     .fly-layer.is-out {
       opacity: 0;
-      transition: opacity .28s ease;
+      transition: opacity .34s ease;
     }
 
     .fly-book {
-      width: 148px;
-      height: 198px;
+      width: min(210px, 56vw);
+      height: min(282px, 75vw);
       position: relative;
       transform-style: preserve-3d;
-      perspective: 1000px;
-      transform: scale(.62) translateY(48px);
+      perspective: 1100px;
+      transform: scale(.58) translateY(52px);
       opacity: 0;
+      will-change: transform, opacity;
     }
 
     .fly-book.is-pull {
-      animation: bookPull .95s cubic-bezier(.22,1,.36,1) forwards;
+      animation: bookPull .9s cubic-bezier(.22,1,.36,1) forwards;
     }
 
     .fly-book.is-open .fly-cover {
-      animation: coverOpen .75s ease forwards;
+      animation: coverOpen .7s ease forwards;
     }
 
-    .fly-book.is-rise {
-      animation: bookRise .9s cubic-bezier(.22,1,.36,1) forwards;
+    .fly-book.is-to-result {
+      animation: bookToResult .42s cubic-bezier(.22,1,.36,1) forwards;
     }
 
     @keyframes bookPull {
-      0% { opacity: 0; transform: scale(.5) translateY(56px) rotateY(-18deg); }
-      35% { opacity: 1; }
-      100% { opacity: 1; transform: scale(.88) translateY(-36px) rotateY(-6deg); }
+      0% { opacity: 0; transform: scale(.52) translateY(60px) rotateY(-16deg); }
+      30% { opacity: 1; }
+      100% { opacity: 1; transform: scale(1) translateY(-28px) rotateY(-5deg); }
     }
 
     @keyframes coverOpen {
-      to { transform: rotateY(-125deg); }
+      to { transform: rotateY(-128deg); }
     }
 
-    @keyframes bookRise {
-      0% { transform: scale(.88) translateY(-36px); }
-      100% { transform: scale(1.16) translateY(-72px); }
+    /* 翻开后就地缩到结果封面大小并上交，避免中间空档 */
+    @keyframes bookToResult {
+      0% { opacity: 1; transform: scale(1) translateY(-28px); }
+      100% { opacity: 0; transform: scale(.72) translateY(-8px); }
     }
 
     .fly-cover,
@@ -355,24 +359,57 @@
     .fly-cover {
       z-index: 3;
       transform-origin: left center;
-      background: #6A8388;
-      box-shadow: 2px 5px 12px rgba(58,50,42,.11);
+      background: var(--book-color, #6A8388);
+      box-shadow: 3px 8px 18px rgba(58,50,42,.14);
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      border: 1px solid rgba(58,50,42,.08);
+      border: 1px solid rgba(58,50,42,.1);
+    }
+
+    /* 封面金线（呼应书架书脊） */
+    .fly-cover::before,
+    .fly-cover::after {
+      content: '';
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      height: 1px;
+      z-index: 0;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent 0%, #C8A45A 16%, #E8D09A 50%, #B8923E 84%, transparent 100%);
+      opacity: .82;
+      box-shadow:
+        2px 3px 0 -0.2px rgba(200, 164, 90, .5),
+        -1px 5px 0 -0.35px rgba(232, 208, 154, .3);
+    }
+
+    .fly-cover::before {
+      top: 14%;
+      transform: rotate(-1.2deg);
+    }
+
+    .fly-cover::after {
+      bottom: 14%;
+      left: 14%;
+      right: 10%;
+      transform: rotate(1deg);
+      box-shadow:
+        -2px -3px 0 -0.2px rgba(200, 164, 90, .45),
+        1px -5px 0 -0.35px rgba(232, 208, 154, .28);
     }
 
     .fly-cover-title {
       position: relative;
       z-index: 1;
       font-family: 'Fraunces', serif;
-      font-size: 14px;
+      font-size: clamp(15px, 4vw, 18px);
       letter-spacing: .38em;
-      color: rgba(247,242,234,.88);
+      color: rgba(247,242,234,.92);
       text-indent: .38em;
       font-weight: 500;
+      text-shadow: 0 1px 0 rgba(58,50,42,.18);
     }
 
     .fly-page {
@@ -380,7 +417,7 @@
       background: #F7F2EA;
       border: 1px solid rgba(58,50,42,.08);
       overflow: hidden;
-      box-shadow: 2px 4px 10px rgba(58,50,42,.08);
+      box-shadow: 2px 4px 12px rgba(58,50,42,.1);
     }
 
     .fly-page img {
@@ -388,7 +425,7 @@
       height: 100%;
       object-fit: cover;
       opacity: 0;
-      transition: opacity .25s;
+      transition: opacity .2s ease;
     }
 
     .fly-book.is-open .fly-page img { opacity: 1; }
@@ -396,11 +433,11 @@
     .app.is-drawing {
       opacity: 0;
       pointer-events: none;
-      transition: opacity .35s ease;
+      transition: opacity .3s ease;
     }
 
     .app {
-      transition: opacity .3s ease;
+      transition: opacity .28s ease;
     }
 
     /* —— Result —— */
@@ -725,7 +762,7 @@
 
       <div class="view" id="view-result">
         <div class="result-cover-wrap">
-          <img class="result-cover" id="result-cover" alt="" src="" width="200" height="200">
+          <img class="result-cover" id="result-cover" alt="" src="" width="200" height="200" decoding="async">
         </div>
         <h2 class="result-title" id="result-title"></h2>
         <p class="result-meta" id="result-meta"></p>
@@ -756,8 +793,8 @@
 
   <div class="fly-layer" id="fly-layer" aria-hidden="true">
     <div class="fly-book" id="fly-book">
-      <div class="fly-cover"><span class="fly-cover-title">DOMOTO</span></div>
-      <div class="fly-page"><img id="fly-cover-img" alt="" src=""></div>
+      <div class="fly-cover" id="fly-cover"><span class="fly-cover-title">DOMOTO</span></div>
+      <div class="fly-page"><img id="fly-cover-img" alt="" src="" decoding="async"></div>
     </div>
   </div>
 
@@ -803,6 +840,7 @@
     const dock = document.getElementById('dock');
     const flyLayer = document.getElementById('fly-layer');
     const flyBook = document.getElementById('fly-book');
+    const flyCover = document.getElementById('fly-cover');
     const flyCoverImg = document.getElementById('fly-cover-img');
     const spinePick = document.getElementById('spine-pick');
     const countHint = document.getElementById('count-hint');
@@ -820,9 +858,18 @@
     const linkSpotify = document.getElementById('link-spotify');
     const linkNetease = document.getElementById('link-netease');
     const scopeInputs = [...document.querySelectorAll('input[name="scope"]')];
+    const appEl = document.querySelector('.app');
+
+    // 与书架 / 主题一致的书脊色
+    const BOOK_COLORS = [
+      '#6A7F78', '#5C4638', '#8A7160', '#3F3430', '#7A9194',
+      '#6E8F96', '#54757C', '#6A8388',
+    ];
 
     let chosen = null;
     let rolling = false;
+    let lastBookColor = '';
+    const coverCache = new Map();
 
     function escapeHtml(str) {
       return String(str)
@@ -955,7 +1002,52 @@
       return new Promise(r => setTimeout(r, ms));
     }
 
-    function showResult() {
+    function pickBookColor() {
+      let color = BOOK_COLORS[Math.floor(Math.random() * BOOK_COLORS.length)];
+      if (BOOK_COLORS.length > 1) {
+        let guard = 0;
+        while (color === lastBookColor && guard < 6) {
+          color = BOOK_COLORS[Math.floor(Math.random() * BOOK_COLORS.length)];
+          guard += 1;
+        }
+      }
+      lastBookColor = color;
+      return color;
+    }
+
+    function preloadCover(src) {
+      if (!src) return Promise.resolve();
+      if (coverCache.has(src)) return coverCache.get(src);
+      const p = new Promise((resolve) => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.onload = () => {
+          if (img.decode) img.decode().then(resolve).catch(resolve);
+          else resolve();
+        };
+        img.onerror = resolve;
+        img.src = src;
+      });
+      coverCache.set(src, p);
+      return p;
+    }
+
+    function preloadPoolCovers() {
+      const urls = [...new Set(ALBUMS.map(a => a.cover).filter(Boolean))];
+      let i = 0;
+      const step = () => {
+        const batch = urls.slice(i, i + 4);
+        i += 4;
+        batch.forEach(preloadCover);
+        if (i < urls.length) {
+          if ('requestIdleCallback' in window) requestIdleCallback(step, { timeout: 800 });
+          else setTimeout(step, 60);
+        }
+      };
+      step();
+    }
+
+    function fillResultContent() {
       resultCover.src = chosen.cover || '';
       resultCover.alt = chosen.title;
       resultTitle.innerHTML = formatTitleHtml(chosen.title);
@@ -963,6 +1055,10 @@
       resultMeta.textContent = `${chosen.artist}${period} · ${chosen.year || ''}`.trim();
       luckName.textContent = luckyColorName(chosen);
       setPlatformLinks(chosen);
+    }
+
+    function showResult() {
+      fillResultContent();
       showView('result');
     }
 
@@ -972,54 +1068,47 @@
       if (!pool.length) return;
       rolling = true;
 
-      // 先藏结果页与平台栏，避免“再抽一次”剧透
-      dock.classList.remove('is-visible');
-      views.result.classList.remove('active');
-      resultCover.removeAttribute('src');
-      resultCover.src = '';
-      resultTitle.innerHTML = '';
-      resultMeta.textContent = '';
-      luckName.textContent = '——色';
-
       chosen = pool[Math.floor(Math.random() * pool.length)];
+      const coverSrc = chosen.cover || '';
+      const coverReady = preloadCover(coverSrc);
 
-      const app = document.querySelector('.app');
-
-      // 预载封面到飞行层；结果页封面等出结果再贴，避免剧透
-      flyCoverImg.src = chosen.cover || '';
+      const bookColor = pickBookColor();
+      flyCover.style.setProperty('--book-color', bookColor);
+      flyCover.style.backgroundColor = bookColor;
+      flyCoverImg.src = coverSrc;
       flyBook.className = 'fly-book';
       flyLayer.classList.remove('is-out');
       flyLayer.classList.add('is-on');
 
       await wait(20);
-      // 书先出现；主界面仍可见
       flyBook.classList.add('is-pull');
       spinePick.classList.add('is-picked');
 
-      // 书已显示后再淡出其他内容
-      await wait(380);
-      app.classList.add('is-drawing');
+      // 书盖住画面后再藏上一轮结果，避免再抽时闪白
+      await wait(320);
+      dock.classList.remove('is-visible');
+      views.result.classList.remove('active');
+      appEl.classList.add('is-drawing');
 
-      await wait(580);
+      await Promise.all([wait(520), coverReady]);
 
       flyBook.classList.add('is-open');
-      await wait(780);
+      await wait(680);
 
-      flyBook.classList.remove('is-pull');
-      flyBook.classList.add('is-rise');
+      // 翻开后立刻铺结果并淡出书，不再上升留白
+      fillResultContent();
+      showView('result');
+      appEl.classList.remove('is-drawing');
       if (navigator.vibrate) navigator.vibrate(40);
-      await wait(720);
-
-      // 结果页在书下面先准备好，再淡出书层，避免空白
-      showResult();
-      await wait(40);
+      await wait(30);
+      flyBook.classList.remove('is-pull');
+      flyBook.classList.add('is-to-result');
       flyLayer.classList.add('is-out');
-      await wait(280);
+      await wait(400);
 
       flyLayer.classList.remove('is-on', 'is-out');
       spinePick.classList.remove('is-picked');
       flyBook.className = 'fly-book';
-      app.classList.remove('is-drawing');
       rolling = false;
     }
 
@@ -1049,23 +1138,30 @@
     });
 
     async function init() {
+      // 内联 albums-data / lucky-colors 已可用，先出首页；JSON 仅作可覆盖更新
+      restoreScopes();
+      updateCountHint();
+      showHome();
+      preloadPoolCovers();
+
       try {
         const [aRes, cRes] = await Promise.all([
-          fetch('albums.json'),
-          fetch('lucky-colors.json'),
+          fetch('albums.json', { cache: 'force-cache' }),
+          fetch('lucky-colors.json', { cache: 'force-cache' }),
         ]);
         if (aRes.ok) {
           const data = await aRes.json();
-          if (Array.isArray(data) && data.length) ALBUMS = data;
+          if (Array.isArray(data) && data.length) {
+            ALBUMS = data;
+            updateCountHint();
+            preloadPoolCovers();
+          }
         }
         if (cRes.ok) {
           const colors = await cRes.json();
           if (colors && typeof colors === 'object') LUCKY = colors;
         }
       } catch {}
-      restoreScopes();
-      updateCountHint();
-      showHome();
     }
 
     init();
