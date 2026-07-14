@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#EFE8DC">
+  <title>図書委員今天听什么</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,550;9..144,600&family=Noto+Serif+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="albums-data.js"></script>
+  <script src="lucky-colors.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #EFE8DC;
+      --ink: #3A322A;
+      --ink-soft: rgba(58, 50, 42, 0.58);
+      --ink-faint: rgba(58, 50, 42, 0.3);
+      --teal: #6E8F96;
+      --teal-deep: #54757C;
+      --line: rgba(58, 50, 42, 0.16);
+      --safe-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+
+    html { height: 100%; }
+
+    body {
+      min-height: 100%;
+      min-height: 100dvh;
+      font-family: 'Noto Serif SC', 'Fraunces', serif;
+      color: var(--ink);
+      background-color: var(--cream);
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        linear-gradient(180deg, rgba(239,232,220,.72) 0%, rgba(239,232,220,.56) 50%, rgba(228,218,200,.7) 100%),
+        url('background.jpg') center 22% / cover no-repeat;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 430px;
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding: clamp(36px, 8vw, 56px) clamp(18px, 5vw, 24px) 8px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      text-align: center;
+      flex-shrink: 0;
+      transition: opacity .3s, height .3s;
+    }
+
+    .header.is-hidden {
+      opacity: 0;
+      height: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .brand {
+      font-family: 'Fraunces', 'Noto Serif SC', serif;
+      font-size: clamp(20px, 5.5vw, 26px);
+      font-weight: 550;
+      letter-spacing: .08em;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+
+    .brand-en {
+      display: block;
+      margin-top: 8px;
+      font-family: 'Fraunces', serif;
+      font-size: clamp(10px, 2.7vw, 11px);
+      letter-spacing: .34em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 0;
+      padding: 20px 0 8px;
+    }
+
+    .view {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      animation: fadeUp .4s ease;
+    }
+
+    .view.active { display: flex; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* —— Home shelf —— */
+    .shelf-block {
+      width: min(300px, 82vw);
+      position: relative;
+    }
+
+    .shelf-books {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 7px;
+      height: 160px;
+      padding: 0 8px 0;
+      position: relative;
+      margin-bottom: -1px;
+      z-index: 1;
+    }
+
+    .spine {
+      width: 30px;
+      border-radius: 1px 1px 0 0;
+      position: relative;
+      transform-origin: bottom center;
+      box-shadow:
+        inset -2px 0 0 rgba(0,0,0,.08),
+        0 1px 3px rgba(58,50,42,.08);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+
+    /* 书脊两端不规则金色装饰线 */
+    .spine::before,
+    .spine::after {
+      content: '';
+      position: absolute;
+      left: 18%;
+      right: 22%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, #C8A45A 18%, #E8D09A 48%, #B8923E 78%, transparent 100%);
+      opacity: .78;
+      pointer-events: none;
+      box-shadow:
+        2px 3px 0 -0.2px rgba(200, 164, 90, .55),
+        -1px 6px 0 -0.35px rgba(232, 208, 154, .35);
+    }
+
+    .spine::before {
+      top: 7px;
+      transform: rotate(-1.5deg);
+    }
+
+    .spine::after {
+      bottom: 8px;
+      left: 22%;
+      right: 16%;
+      transform: rotate(1.2deg);
+      box-shadow:
+        -2px -3px 0 -0.2px rgba(200, 164, 90, .5),
+        1px -5px 0 -0.35px rgba(232, 208, 154, .32);
+    }
+
+    .spine:nth-child(1) { height: 108px; background: #6A7F78; width: 28px; }
+    .spine:nth-child(1)::before { top: 6px; left: 20%; right: 18%; transform: rotate(1.8deg); }
+    .spine:nth-child(1)::after { bottom: 7px; transform: rotate(-2deg); }
+
+    .spine:nth-child(2) { height: 138px; background: #5C4638; width: 34px; }
+    .spine:nth-child(2)::before { top: 9px; left: 14%; right: 24%; transform: rotate(-2.4deg); }
+    .spine:nth-child(2)::after { bottom: 10px; left: 20%; right: 14%; }
+
+    .spine:nth-child(3) { height: 118px; background: #8A7160; }
+    .spine:nth-child(3)::before { top: 5px; transform: rotate(.8deg); box-shadow: 3px 4px 0 -.25px rgba(200,164,90,.48); }
+    .spine:nth-child(3)::after { bottom: 9px; left: 16%; right: 20%; transform: rotate(-1deg); }
+
+    .spine:nth-child(4) { height: 150px; background: #3F3430; width: 32px; }
+    .spine:nth-child(4)::before { top: 8px; left: 22%; right: 15%; transform: rotate(-.6deg); }
+    .spine:nth-child(4)::after { bottom: 6px; transform: rotate(2.1deg); }
+
+    .spine:nth-child(5) { height: 124px; background: #7A9194; width: 29px; }
+    .spine:nth-child(5)::before { top: 10px; left: 16%; right: 20%; transform: rotate(2deg); }
+    .spine:nth-child(5)::after { bottom: 8px; left: 24%; right: 18%; transform: rotate(-1.4deg); }
+
+    .spine.is-picked {
+      opacity: 0;
+      transform: translateY(-18px) scale(1.04);
+    }
+
+    .shelf-plank {
+      height: 11px;
+      border-radius: 1px;
+      background: linear-gradient(180deg, #D2C2A8, #BFAF94 55%, #B09D82);
+      box-shadow: 0 8px 16px rgba(58,50,42,.14);
+      position: relative;
+      z-index: 0;
+    }
+
+    .scope-row {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .scope-box {
+      width: 54px;
+      height: 68px;
+      border: 1.5px solid var(--line);
+      background: rgba(255,251,245,.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0 9px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: border-color .2s, background .2s;
+    }
+
+    .scope-box:has(input:checked) {
+      border-color: var(--teal-deep);
+      background: rgba(110,143,150,.16);
+    }
+
+    .scope-box input {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid rgba(58,50,42,.35);
+      background: #fff;
+      position: relative;
+    }
+
+    .scope-box input:checked {
+      background: var(--teal-deep);
+      border-color: var(--teal-deep);
+    }
+
+    .scope-box input:checked::after {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 1px;
+      width: 5px;
+      height: 8px;
+      border: solid #fff;
+      border-width: 0 1.5px 1.5px 0;
+      transform: rotate(45deg);
+    }
+
+    .scope-box .char {
+      font-size: 15px;
+      letter-spacing: .12em;
+      color: var(--ink);
+    }
+
+    .home-count {
+      margin-top: 14px;
+      font-size: 11px;
+      letter-spacing: .14em;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+
+    /* —— Flying book animation —— */
+    .fly-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 12vh;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+
+    .fly-layer.is-on {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .fly-layer.is-out {
+      opacity: 0;
+      transition: opacity .28s ease;
+    }
+
+    .fly-book {
+      width: 148px;
+      height: 198px;
+      position: relative;
+      transform-style: preserve-3d;
+      perspective: 1000px;
+      transform: scale(.62) translateY(48px);
+      opacity: 0;
+    }
+
+    .fly-book.is-pull {
+      animation: bookPull .95s cubic-bezier(.22,1,.36,1) forwards;
+    }
+
+    .fly-book.is-open .fly-cover {
+      animation: coverOpen .75s ease forwards;
+    }
+
+    .fly-book.is-rise {
+      animation: bookRise .9s cubic-bezier(.22,1,.36,1) forwards;
+    }
+
+    @keyframes bookPull {
+      0% { opacity: 0; transform: scale(.5) translateY(56px) rotateY(-18deg); }
+      35% { opacity: 1; }
+      100% { opacity: 1; transform: scale(.88) translateY(-36px) rotateY(-6deg); }
+    }
+
+    @keyframes coverOpen {
+      to { transform: rotateY(-125deg); }
+    }
+
+    @keyframes bookRise {
+      0% { transform: scale(.88) translateY(-36px); }
+      100% { transform: scale(1.16) translateY(-72px); }
+    }
+
+    .fly-cover,
+    .fly-page {
+      position: absolute;
+      inset: 0;
+      border-radius: 1px;
+      backface-visibility: hidden;
+    }
+
+    .fly-cover {
+      z-index: 3;
+      transform-origin: left center;
+      background: #6A8388;
+      box-shadow: 2px 5px 12px rgba(58,50,42,.11);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px solid rgba(58,50,42,.08);
+    }
+
+    .fly-cover-title {
+      position: relative;
+      z-index: 1;
+      font-family: 'Fraunces', serif;
+      font-size: 14px;
+      letter-spacing: .38em;
+      color: rgba(247,242,234,.88);
+      text-indent: .38em;
+      font-weight: 500;
+    }
+
+    .fly-page {
+      z-index: 2;
+      background: #F7F2EA;
+      border: 1px solid rgba(58,50,42,.08);
+      overflow: hidden;
+      box-shadow: 2px 4px 10px rgba(58,50,42,.08);
+    }
+
+    .fly-page img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity .25s;
+    }
+
+    .fly-book.is-open .fly-page img { opacity: 1; }
+
+    .app.is-drawing {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .35s ease;
+    }
+
+    .app {
+      transition: opacity .3s ease;
+    }
+
+    /* —— Result —— */
+    .result-cover-wrap {
+      width: min(200px, 52vw);
+      aspect-ratio: 1;
+      position: relative;
+      margin-bottom: 18px;
+    }
+
+    .result-cover-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 12% -4% -6% 6%;
+      background: rgba(58,50,42,.14);
+      filter: blur(14px);
+    }
+
+    .result-cover {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 2px;
+      box-shadow: 0 16px 30px rgba(58,50,42,.18);
+    }
+
+    .result-title {
+      max-width: 100%;
+      text-align: center;
+      font-family: 'Fraunces', 'Noto Serif SC', serif;
+      font-weight: 550;
+      padding: 0 4px;
+    }
+
+    .result-title .title-main {
+      display: block;
+      font-size: clamp(16px, 4.6vw, 24px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: .04em;
+    }
+
+    .result-title .title-mid {
+      display: block;
+      margin-top: 4px;
+      font-size: clamp(13px, 3.6vw, 16px);
+      color: var(--teal-deep);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .result-title .title-rest {
+      display: block;
+      margin-top: 2px;
+      font-size: clamp(12px, 3.2vw, 14px);
+      color: var(--ink-soft);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .result-meta {
+      margin-top: 8px;
+      font-size: clamp(11px, 3vw, 13px);
+      letter-spacing: .1em;
+      color: var(--ink-soft);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .luck-card {
+      margin-top: 18px;
+      width: 100%;
+      max-width: 300px;
+      padding: 14px 16px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      text-align: center;
+      background: rgba(255,251,245,.55);
+    }
+
+    .luck-label {
+      font-size: 12px;
+      letter-spacing: .18em;
+      color: var(--ink-soft);
+    }
+
+    .luck-name {
+      margin-top: 6px;
+      font-size: clamp(16px, 4.2vw, 20px);
+      letter-spacing: .16em;
+      color: var(--ink);
+      font-family: 'Fraunces', 'Noto Serif SC', serif;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .history-title {
+      font-family: 'Fraunces', serif;
+      font-size: 14px;
+      letter-spacing: .24em;
+      color: var(--teal-deep);
+      margin-bottom: 14px;
+    }
+
+    .history-list {
+      width: 100%;
+      max-width: 360px;
+      max-height: min(48vh, 360px);
+      overflow-y: auto;
+      scrollbar-width: none;
+      background: rgba(255,251,245,.88);
+      border: 1px solid var(--line);
+      padding: 4px 12px;
+    }
+
+    .history-list::-webkit-scrollbar { display: none; }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .history-item:last-child { border-bottom: none; }
+
+    .history-thumb {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .history-info { flex: 1; min-width: 0; }
+
+    .history-info .name {
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-info .artist {
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item .time {
+      font-size: 11px;
+      color: var(--ink-faint);
+      flex-shrink: 0;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 13px;
+      padding: 36px 0;
+      letter-spacing: .1em;
+    }
+
+    .btn {
+      font-family: 'Noto Serif SC', serif;
+      font-size: clamp(13px, 3.4vw, 14px);
+      letter-spacing: .2em;
+      padding: 13px 28px;
+      border: none;
+      cursor: pointer;
+      transition: transform .15s, opacity .2s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: var(--teal-deep);
+      color: #F7F2EA;
+      width: 100%;
+      max-width: 220px;
+    }
+
+    .btn-outline {
+      background: rgba(255,251,245,.7);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      flex: 1;
+      padding: 12px 14px;
+    }
+
+    .btn-solid {
+      background: var(--teal-deep);
+      color: #F7F2EA;
+      border: 1px solid var(--teal-deep);
+      flex: 1;
+      padding: 12px 14px;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink-soft);
+      border: 1px solid var(--line);
+      font-size: 12px;
+      padding: 10px 24px;
+    }
+
+    .footer-actions {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      padding-bottom: calc(52px + var(--safe-bottom));
+    }
+
+    .dock {
+      position: fixed;
+      left: 50%;
+      bottom: calc(14px + var(--safe-bottom));
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 8px 14px;
+      background: rgba(255,251,245,.85);
+      border: 1px solid rgba(58,50,42,.1);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+    }
+
+    .dock.is-visible { opacity: 1; pointer-events: auto; }
+
+    .dock a {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+    }
+
+    .dock a img, .dock a svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .watermark {
+      text-align: center;
+      margin-top: 52px;
+      padding: 36px 0 calc(18px + var(--safe-bottom));
+      font-size: 10px;
+      letter-spacing: .18em;
+      color: rgba(58,50,42,.26);
+      font-family: 'Fraunces', serif;
+      user-select: none;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+
+  <div class="app">
+    <header class="header" id="header">
+      <h1 class="brand">図書委員今天听什么<span class="brand-en">ARCHIVE OF DOMOTO</span></h1>
+    </header>
+
+    <main class="main">
+      <div class="view active" id="view-home">
+        <div class="shelf-block">
+          <div class="shelf-books" id="shelf-books">
+            <div class="spine"></div>
+            <div class="spine"></div>
+            <div class="spine" id="spine-pick"></div>
+            <div class="spine"></div>
+            <div class="spine"></div>
+          </div>
+          <div class="shelf-plank"></div>
+        </div>
+
+        <div class="scope-row">
+          <label class="scope-box" title="KinKi Kids / DOMOTO">
+            <input type="checkbox" name="scope" value="group" checked>
+            <span class="char">团</span>
+          </label>
+          <label class="scope-box" title="堂本剛 / ENDRECHERI">
+            <input type="checkbox" name="scope" value="tsuyoshi" checked>
+            <span class="char">刚</span>
+          </label>
+          <label class="scope-box" title="堂本光一">
+            <input type="checkbox" name="scope" value="koichi" checked>
+            <span class="char">光</span>
+          </label>
+        </div>
+        <p class="home-count" id="count-hint"></p>
+      </div>
+
+      <div class="view" id="view-result">
+        <div class="result-cover-wrap">
+          <img class="result-cover" id="result-cover" alt="" src="" width="200" height="200">
+        </div>
+        <h2 class="result-title" id="result-title"></h2>
+        <p class="result-meta" id="result-meta"></p>
+        <div class="luck-card">
+          <div class="luck-label">今日幸运色</div>
+          <div class="luck-name" id="luck-name">——色</div>
+        </div>
+        <div class="result-actions">
+          <button class="btn btn-outline" id="btn-redraw">再抽一张</button>
+          <button class="btn btn-solid" id="btn-confirm">就听这张</button>
+        </div>
+      </div>
+
+      <div class="view" id="view-history">
+        <p class="history-title">聆听记录</p>
+        <div class="history-list" id="history-list"></div>
+      </div>
+    </main>
+
+    <div class="footer-actions" id="footer">
+      <button class="btn btn-primary" id="btn-start">抽一张</button>
+      <button class="btn btn-outline hidden" id="btn-home" style="max-width:220px;width:100%">返回书架</button>
+      <button class="btn btn-ghost hidden" id="btn-clear">清空记录</button>
+    </div>
+
+    <p class="watermark">produced by AET Studio</p>
+  </div>
+
+  <div class="fly-layer" id="fly-layer" aria-hidden="true">
+    <div class="fly-book" id="fly-book">
+      <div class="fly-cover"><span class="fly-cover-title">DOMOTO</span></div>
+      <div class="fly-page"><img id="fly-cover-img" alt="" src=""></div>
+    </div>
+  </div>
+
+  <div class="dock" id="dock" aria-label="播放平台">
+    <!-- Official-style marks -->
+    <a id="link-apple" href="#" target="_blank" rel="noopener noreferrer" title="Apple Music" aria-label="Apple Music">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <defs>
+          <linearGradient id="amg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FB5C74"/>
+            <stop offset="100%" stop-color="#FA233B"/>
+          </linearGradient>
+        </defs>
+        <rect width="24" height="24" rx="5.5" fill="url(#amg)"/>
+        <path fill="#fff" d="M15.4 5.2c.15-.02.3.08.3.24v9.35c0 1.2-.9 2.25-2.2 2.45-1.45.22-2.7-.8-2.7-2.2 0-1.2.95-2.15 2.2-2.25.4-.03.75.02 1.1.15V8.35l-5.1 1.05c-.2.04-.35.22-.35.42v6.55c0 1.2-.9 2.25-2.2 2.45-1.45.22-2.7-.8-2.7-2.2 0-1.2.95-2.15 2.2-2.25.4-.03.75.02 1.1.15V8.4c0-.18.12-.33.3-.37l7.85-1.62c.15-.03.3.08.3.24z"/>
+      </svg>
+    </a>
+    <a id="link-spotify" href="#" target="_blank" rel="noopener noreferrer" title="Spotify" aria-label="Spotify">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="12" fill="#1DB954"/>
+        <path fill="#fff" d="M16.9 10.45c-2.55-1.52-6.75-1.66-9.18-.91a.94.94 0 0 1-.55-1.8c2.8-.86 7.5-.7 10.5 1.08a.94.94 0 1 1-.77 1.63zm-.18 2.7a.8.8 0 0 1-1.1.27c-2.2-1.35-5.55-1.74-8.15-.95a.8.8 0 1 1-.47-1.53c2.95-.9 6.65-.46 9.18 1.1a.8.8 0 0 1 .27 1.1zm-1.25 2.6a.64.64 0 0 1-.88.21c-1.92-1.17-4.33-1.44-7.17-.79a.64.64 0 1 1-.28-1.24c3.14-.72 5.85-.41 8.05.94a.64.64 0 0 1 .28.88z"/>
+      </svg>
+    </a>
+    <a id="link-netease" href="#" target="_blank" rel="noopener noreferrer" title="网易云音乐" aria-label="网易云音乐">
+      <img src="icons/wyy.png" alt="网易云音乐" width="22" height="22">
+    </a>
+  </div>
+
+  <script>
+    let ALBUMS = Array.isArray(window.ALBUMS_DATA) ? window.ALBUMS_DATA.slice() : [];
+    let LUCKY = window.LUCKY_COLORS || {};
+    const STORAGE_KEY = 'todays_shelf_history_v3';
+    const SCOPE_KEY = 'todays_shelf_scope_v3';
+
+    const views = {
+      home: document.getElementById('view-home'),
+      result: document.getElementById('view-result'),
+      history: document.getElementById('view-history'),
+    };
+
+    const header = document.getElementById('header');
+    const footer = document.getElementById('footer');
+    const dock = document.getElementById('dock');
+    const flyLayer = document.getElementById('fly-layer');
+    const flyBook = document.getElementById('fly-book');
+    const flyCoverImg = document.getElementById('fly-cover-img');
+    const spinePick = document.getElementById('spine-pick');
+    const countHint = document.getElementById('count-hint');
+    const resultCover = document.getElementById('result-cover');
+    const resultTitle = document.getElementById('result-title');
+    const resultMeta = document.getElementById('result-meta');
+    const luckName = document.getElementById('luck-name');
+    const historyList = document.getElementById('history-list');
+    const btnStart = document.getElementById('btn-start');
+    const btnHome = document.getElementById('btn-home');
+    const btnRedraw = document.getElementById('btn-redraw');
+    const btnConfirm = document.getElementById('btn-confirm');
+    const btnClear = document.getElementById('btn-clear');
+    const linkApple = document.getElementById('link-apple');
+    const linkSpotify = document.getElementById('link-spotify');
+    const linkNetease = document.getElementById('link-netease');
+    const scopeInputs = [...document.querySelectorAll('input[name="scope"]')];
+
+    let chosen = null;
+    let rolling = false;
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatTitleHtml(title) {
+      const raw = String(title || '');
+      const patterns = [
+        /^(.*?)~~(.+?)~~(.*)$/,
+        /^(.*?)～(.+?)～(.*)$/,
+        /^(.*?)~(.+?)~(.*)$/,
+        /^(.*?)\s[-－—]\s*(.+?)\s*[-－—]\s*(.*)$/,
+        /^(.*?)\s[-－—](.+?)[-－—]\s*(.*)$/,
+      ];
+      for (const re of patterns) {
+        const m = raw.match(re);
+        if (!m) continue;
+        const left = m[1].trim();
+        const mid = m[2].trim();
+        const right = m[3].trim();
+        if (!mid) continue;
+        let html = '';
+        if (left) html += `<span class="title-main">${escapeHtml(left)}</span>`;
+        html += `<span class="title-mid">${escapeHtml(mid)}</span>`;
+        if (right) html += `<span class="title-rest">${escapeHtml(right)}</span>`;
+        return html || `<span class="title-main">${escapeHtml(raw)}</span>`;
+      }
+      return `<span class="title-main">${escapeHtml(raw)}</span>`;
+    }
+
+    function getSelectedScopes() {
+      return scopeInputs.filter(i => i.checked).map(i => i.value);
+    }
+
+    function poolAlbums() {
+      const scopes = getSelectedScopes();
+      if (!scopes.length) return [];
+      return ALBUMS.filter(a => scopes.includes(a.artistKey));
+    }
+
+    function updateCountHint() {
+      const pool = poolAlbums();
+      countHint.textContent = pool.length ? `当前 ${pool.length} 张` : '请至少勾选一项';
+      btnStart.disabled = pool.length === 0;
+      try { localStorage.setItem(SCOPE_KEY, JSON.stringify(getSelectedScopes())); } catch {}
+    }
+
+    function restoreScopes() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SCOPE_KEY) || 'null');
+        if (Array.isArray(saved) && saved.length) {
+          scopeInputs.forEach(i => { i.checked = saved.includes(i.value); });
+        }
+      } catch {}
+    }
+
+    function showView(name) {
+      Object.values(views).forEach(v => v.classList.remove('active'));
+      views[name].classList.add('active');
+      header.classList.toggle('is-hidden', name !== 'home' && name !== 'history');
+      btnStart.classList.toggle('hidden', name !== 'home');
+      btnHome.classList.toggle('hidden', name !== 'history');
+      btnClear.classList.toggle('hidden', name !== 'history');
+      dock.classList.toggle('is-visible', name === 'result');
+      footer.style.display = '';
+    }
+
+    function getHistory() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch { return []; }
+    }
+
+    function saveHistory(list) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    function addToHistory(album) {
+      const list = getHistory();
+      list.unshift({
+        id: album.id,
+        title: album.title,
+        artist: album.artist,
+        year: album.year,
+        cover: album.cover,
+        time: new Date().toLocaleString('zh-CN', {
+          month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+        }),
+      });
+      saveHistory(list);
+    }
+
+    function renderHistory() {
+      const list = getHistory();
+      if (!list.length) {
+        historyList.innerHTML = '<p class="history-empty">书架还空着</p>';
+        return;
+      }
+      historyList.innerHTML = list.map(item => `
+        <div class="history-item">
+          <img class="history-thumb" src="${escapeHtml(item.cover || '')}" alt="" loading="lazy">
+          <div class="history-info">
+            <div class="name">${escapeHtml(item.title)}</div>
+            <div class="artist">${escapeHtml(item.artist)}${item.year ? ' · ' + escapeHtml(item.year) : ''}</div>
+          </div>
+          <span class="time">${escapeHtml(item.time)}</span>
+        </div>
+      `).join('');
+    }
+
+    function luckyColorName(album) {
+      const name = LUCKY[album.id] || '米色';
+      return /色$/.test(name) ? name : name + '色';
+    }
+
+    function setPlatformLinks(album) {
+      const apple = album.apple || '';
+      const spotify = album.spotify || '';
+      linkApple.href = /\/album\//.test(apple) ? apple : (album.appleArtist || apple || '#');
+      linkSpotify.href = /open\.spotify\.com\/album\//.test(spotify)
+        ? spotify
+        : (album.spotifyArtist || spotify || '#');
+      linkNetease.href = album.netease || album.neteaseArtist || '#';
+    }
+
+    function wait(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    function showResult() {
+      resultCover.src = chosen.cover || '';
+      resultCover.alt = chosen.title;
+      resultTitle.innerHTML = formatTitleHtml(chosen.title);
+      const period = chosen.period && chosen.period !== chosen.artist ? ` · ${chosen.period}` : '';
+      resultMeta.textContent = `${chosen.artist}${period} · ${chosen.year || ''}`.trim();
+      luckName.textContent = luckyColorName(chosen);
+      setPlatformLinks(chosen);
+      showView('result');
+    }
+
+    async function startRoll() {
+      if (rolling) return;
+      const pool = poolAlbums();
+      if (!pool.length) return;
+      rolling = true;
+
+      // 先藏结果页与平台栏，避免“再抽一次”剧透
+      dock.classList.remove('is-visible');
+      views.result.classList.remove('active');
+      resultCover.removeAttribute('src');
+      resultCover.src = '';
+      resultTitle.innerHTML = '';
+      resultMeta.textContent = '';
+      luckName.textContent = '——色';
+
+      chosen = pool[Math.floor(Math.random() * pool.length)];
+
+      const app = document.querySelector('.app');
+
+      // 预载封面到飞行层；结果页封面等出结果再贴，避免剧透
+      flyCoverImg.src = chosen.cover || '';
+      flyBook.className = 'fly-book';
+      flyLayer.classList.remove('is-out');
+      flyLayer.classList.add('is-on');
+
+      await wait(20);
+      // 书先出现；主界面仍可见
+      flyBook.classList.add('is-pull');
+      spinePick.classList.add('is-picked');
+
+      // 书已显示后再淡出其他内容
+      await wait(380);
+      app.classList.add('is-drawing');
+
+      await wait(580);
+
+      flyBook.classList.add('is-open');
+      await wait(780);
+
+      flyBook.classList.remove('is-pull');
+      flyBook.classList.add('is-rise');
+      if (navigator.vibrate) navigator.vibrate(40);
+      await wait(720);
+
+      // 结果页在书下面先准备好，再淡出书层，避免空白
+      showResult();
+      await wait(40);
+      flyLayer.classList.add('is-out');
+      await wait(280);
+
+      flyLayer.classList.remove('is-on', 'is-out');
+      spinePick.classList.remove('is-picked');
+      flyBook.className = 'fly-book';
+      app.classList.remove('is-drawing');
+      rolling = false;
+    }
+
+    function showHome() {
+      showView('home');
+      updateCountHint();
+    }
+
+    function showHistoryView() {
+      renderHistory();
+      showView('history');
+    }
+
+    scopeInputs.forEach(i => i.addEventListener('change', updateCountHint));
+    btnStart.addEventListener('click', startRoll);
+    btnRedraw.addEventListener('click', startRoll);
+    btnHome.addEventListener('click', showHome);
+    btnConfirm.addEventListener('click', () => {
+      addToHistory(chosen);
+      showHistoryView();
+    });
+    btnClear.addEventListener('click', () => {
+      if (confirm('确定清空所有聆听记录吗？')) {
+        saveHistory([]);
+        renderHistory();
+      }
+    });
+
+    async function init() {
+      try {
+        const [aRes, cRes] = await Promise.all([
+          fetch('albums.json'),
+          fetch('lucky-colors.json'),
+        ]);
+        if (aRes.ok) {
+          const data = await aRes.json();
+          if (Array.isArray(data) && data.length) ALBUMS = data;
+        }
+        if (cRes.ok) {
+          const colors = await cRes.json();
+          if (colors && typeof colors === 'object') LUCKY = colors;
+        }
+      } catch {}
+      restoreScopes();
+      updateCountHint();
+      showHome();
+    }
+
+    init();
+  </script>
+</body>
+</html>
